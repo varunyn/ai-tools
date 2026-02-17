@@ -109,8 +109,8 @@ Keep your OCI credentials in the project directory for easier management:
 
 2. The script will create `config/oci-config` (from the example) and `config/config.yaml`, then guide you to:
    - Edit `oci-config` with your OCI credentials
-    - Place your private key as `keys/oci-private-key.pem`
-    - Configure `config/config.yaml` with your compartment details
+   - Place your private key as `keys/oci-private-key.pem`
+   - Configure `config/config.yaml` with your compartment details
    - **Important**: Update the `key_file` path in `oci-config` to `/home/appuser/.oci/oci-private-key.pem` (this is the home directory of the user running Streamlit inside the container)
    - The compose file also mounts your credentials into `/root/.oci` for compatibility, but the application actually runs as `appuser`, so the `/home/appuser/.oci/...` path must exist
 
@@ -178,19 +178,16 @@ The app will open in your default web browser at http://localhost:8501.
 ## Usage
 
 1. **Select or Create a Prompt**:
-
    - Choose from the dropdown menu of saved prompts
    - Edit the prompt in the text area
    - Save custom prompts with descriptive names
    - Use `{}` as a placeholder for the text content
 
 2. **Upload a Text File**:
-
    - Use the file uploader to select a text file (TXT format)
    - The app supports files up to 200MB
 
 3. **View the Summary**:
-
    - After processing, the summary appears in a formatted view
    - Click "Copy to Clipboard" to switch to a plain text view for easy copying
    - Click "Back to Formatted View" to return to the styled version

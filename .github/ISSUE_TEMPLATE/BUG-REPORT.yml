@@ -1,0 +1,96 @@
+name: "🐛 Bug Report"
+description: Report a regression or defect in any app inside this repo.
+title: "🐛 [BUG] - <title>"
+labels: ["bug"]
+body:
+  - type: dropdown
+    id: app
+    attributes:
+      label: "Affected App"
+      description: Which sub-app is impacted?
+      options:
+        - streamlit-summarizer
+        - other (describe below)
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: "Description"
+      description: Clear summary of what broke and what you expected instead.
+      placeholder: Short and explicit description of your incident...
+    validations:
+      required: true
+  - type: input
+    id: reprod-url
+    attributes:
+      label: "Reproduction URL / Branch"
+      description: Link to the branch/fork demonstrating the bug (if applicable)
+      placeholder: ex. https://github.com/USERNAME/ai-tools/tree/bug-branch
+    validations:
+      required: true
+  - type: textarea
+    id: reprod
+    attributes:
+      label: "Reproduction steps"
+      description: Enumerate the exact steps to reproduce.
+      value: |
+        1. Go to '...'
+        2. Click on '....'
+        3. Scroll down to '....'
+        4. See error
+      render: bash
+    validations:
+      required: true
+  - type: textarea
+    id: screenshot
+    attributes:
+      label: "Screenshots"
+      description: If applicable, add screenshots to help explain your problem.
+      value: |
+        ![DESCRIPTION](LINK.png)
+      render: bash
+    validations:
+      required: false
+  - type: textarea
+    id: logs
+    attributes:
+      label: "Logs"
+      description: Please copy and paste any relevant log output. This will be automatically formatted into code, so no need for backticks.
+      render: bash
+    validations:
+      required: false
+  - type: textarea
+    id: oci-context
+    attributes:
+      label: "OCI Context"
+      description: Which OCI profile/compartment did you use? Docker or local `~/.oci/config`?
+      placeholder: e.g. docker-compose with project-scoped config, profile DEFAULT, compartment ocid1.compartment...
+    validations:
+      required: false
+  - type: dropdown
+    id: browsers
+    attributes:
+      label: "Browsers"
+      description: What browsers are you seeing the problem on ?
+      multiple: true
+      options:
+        - Firefox
+        - Chrome
+        - Safari
+        - Microsoft Edge
+        - Opera
+    validations:
+      required: false
+  - type: dropdown
+    id: os
+    attributes:
+      label: "OS"
+      description: What is the impacted environment ?
+      multiple: true
+      options:
+        - Windows
+        - Linux
+        - Mac
+    validations:
+      required: false

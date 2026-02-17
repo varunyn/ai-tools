@@ -1,0 +1,87 @@
+name: "💡 Feature Request"
+description: Propose a new enhancement for one of the apps in this repo.
+title: "💡 [REQUEST] - <title>"
+labels: ["enhancement"]
+body:
+  - type: dropdown
+    id: app
+    attributes:
+      label: "Target App"
+      description: Which subfolder/app does this request apply to?
+      options:
+        - streamlit-summarizer
+        - new app proposal (describe below)
+    validations:
+      required: true
+  - type: input
+    id: start_date
+    attributes:
+      label: "Start Date"
+      description: Start of development
+      placeholder: "month/day/year"
+    validations:
+      required: false
+  - type: textarea
+    id: implementation_pr
+    attributes:
+      label: "Implementation PR"
+      description: Pull request used
+      placeholder: "#Pull Request ID"
+    validations:
+      required: false
+  - type: textarea
+    id: reference_issues
+    attributes:
+      label: "Reference Issues"
+      description: Common issues
+      placeholder: "#Issues IDs"
+    validations:
+      required: false
+  - type: textarea
+    id: summary
+    attributes:
+      label: "Summary"
+      description: Provide a brief explanation of the feature
+      placeholder: Describe in a few lines your feature request
+    validations:
+      required: true
+  - type: textarea
+    id: motivation
+    attributes:
+      label: "Problem / Motivation"
+      description: What user pain or workflow does this solve?
+      placeholder: Describe the current limitation and why it matters.
+    validations:
+      required: true
+  - type: textarea
+    id: basic_example
+    attributes:
+      label: "Basic Example"
+      description: Indicate here some basic examples of your feature.
+      placeholder: A few specific words about your feature request.
+    validations:
+      required: true
+  - type: textarea
+    id: drawbacks
+    attributes:
+      label: "Drawbacks"
+      description: What are the drawbacks/impacts of your feature request ?
+      placeholder: Identify the drawbacks and impacts while being neutral on your feature request
+    validations:
+      required: true
+  - type: textarea
+    id: unresolved_question
+    attributes:
+      label: "Unresolved questions"
+      description: What questions still remain unresolved ?
+      placeholder: Identify any unresolved issues.
+    validations:
+      required: false
+  - type: textarea
+    id: oci-impact
+    attributes:
+      label: "OCI / Infra Impact"
+      description: Does this require new OCI resources, model access, or config changes?
+      placeholder: List any new OCI services, profiles, or quota considerations.
+    validations:
+      required: false
