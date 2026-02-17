@@ -88,7 +88,7 @@ This is a Streamlit application that uses OCI Generative AI to summarize text co
 
 ### Option 1: Using Docker (Recommended)
 
-The easiest way to run the application is using Docker, which ensures consistent behavior across different environments.
+The easiest way to run the application is using Docker, which ensures consistent behavior across different environments. For the full Docker workflow, key path requirements, and troubleshooting, see [docs/DOCKER-SETUP.md](docs/DOCKER-SETUP.md).
 
 #### Prerequisites for Docker
 
@@ -222,6 +222,7 @@ When creating a prompt, always use `{}` as a placeholder for where the actual te
   - **Root Cause**: The `key_file` path in `oci-config` must use the Docker container's internal path
   - **Solution**: Edit `oci-config` and change `key_file=./oci-private-key.pem` to `key_file=/home/appuser/.oci/oci-private-key.pem`
   - Verify file permissions: `chmod 600 oci-private-key.pem oci-config`
+  - See [docs/DOCKER-SETUP.md](docs/DOCKER-SETUP.md) for the full Docker setup and key path guide.
 - **Summary Generation Fails**: Check your internet connection and OCI service availability
 - **Prompt Not Saving**: Make sure you've entered a name for the prompt
 
@@ -270,6 +271,8 @@ docker-compose up --build
 ```
 
 ## Development
+
+For end-to-end testing with pytest and Playwright (prompt persistence, file upload, etc.), see [docs/testing-e2e.md](docs/testing-e2e.md).
 
 ### Managing Dependencies
 
