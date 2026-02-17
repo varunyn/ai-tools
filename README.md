@@ -4,6 +4,8 @@ This repository will host multiple AI/automation utilities. The first app lives 
 `streamlit-summarizer/`, which contains the full Streamlit + OCI Generative AI text
 summarizer (docs, Docker setup, tests, etc.).
 
+**Disclaimer:** No apps in this repository are intended for production use. They are for reference and learning only.
+
 ## Apps
 
 - [`streamlit-summarizer/`](streamlit-summarizer/) – Streamlit UI for uploading plain-text
@@ -13,12 +15,8 @@ summarizer (docs, Docker setup, tests, etc.).
 ## Contributing
 
 1. Clone the repo and work inside the relevant app directory (e.g., `cd streamlit-summarizer`).
-2. Follow the per-app `README.md` / `AGENTS.md` for build, lint, and test commands.
-3. Keep shared tooling (e.g., `.gitignore`, common docs) at the repository root when possible.
-4. Use meaningful commits (conventional wording preferred) and avoid committing secrets
-   (`config/`, `keys/`, `.env`, etc.). Each app maintains its own `.gitignore` to keep
-   sensitive files (e.g., `streamlit-summarizer/keys/`) out of version control. For
-   non-Docker workflows you can rely on your system `~/.oci/config`; for Docker follow the
-   per-app docs to place OCI credentials under the app directory.
+2. Keep shared tooling (e.g., `.gitignore`, common docs) at the repository root when possible.
 
 Future apps can be added under new subdirectories alongside `streamlit-summarizer/`.
+
+This project is licensed under the [MIT License](LICENSE).
