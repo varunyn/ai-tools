@@ -1,0 +1,31 @@
+services:
+  streamlit-app:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    container_name: text-summarizer-app
+    ports:
+      - "8501:8501"
+    volumes:
+      # Mount local OCI config files (create these locally)
+      - ./config/oci-config:/root/.oci/config:ro
+      - ./keys/oci-private-key.pem:/root/.oci/oci-private-key.pem:ro
+      - ./config/oci-config:/home/appuser/.oci/config:ro
+      - ./keys/oci-private-key.pem:/home/appuser/.oci/oci-private-key.pem:ro
+      # Fallback: Mount system OCI config if local files don't exist
+      # - ~/.oci:/root/.oci:ro
+      # Mount config.yaml (you need to create this first)
+      - ./config/config.yaml:/app/config.yaml:ro
+      # Mount for persistent data (saved prompts)
+      - ./data:/app/data
+    environment:
+      - STREAMLIT_SERVER_PORT=8501
+      - STREAMLIT_SERVER_ADDRESS=0.0.0.0
+      - STREAMLIT_SERVER_MAX_UPLOAD_SIZE=200
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8501/_stcore/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s

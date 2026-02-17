@@ -1,0 +1,112 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# pyenv
+.python-version
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# mypy
+.mypy_cache/
+.dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# VS Code
+.vscode/
+
+# macOS
+.DS_Store
+
+# Docker
+*.log
+docker-compose.override.yml
+
+# Environment variables
+.env
+.env.*
+
+# Project-specific (streamlit-summarizer app)
+streamlit-summarizer/config/oci-config
+streamlit-summarizer/config/config.yaml
+streamlit-summarizer/keys/
+
+# Allow data directory structure but ignore sensitive content
+streamlit-summarizer/data/*.txt
+streamlit-summarizer/data/*.log
+streamlit-summarizer/data/temp*
+# But allow saved prompts + gitkeeps
+!streamlit-summarizer/data/saved_prompts.json
+!streamlit-summarizer/data/.gitkeep
+
+# Ignore saved model weights, checkpoints, etc.
+*.h5
+*.ckpt
+*.pth
+*.pt
+
+# Ignore Streamlit static and cache
+.streamlit/
+
+# Ignore backup files
+*~
+*.bak
+
+# Ignore test output
+*.out
+*.tmp 
+
+# Ignore log files but keep logs directory structure
+streamlit-summarizer/logs/*.log
+streamlit-summarizer/logs/*.txt
+streamlit-summarizer/logs/*.out
+# But allow .gitkeep and README files
+!streamlit-summarizer/logs/.gitkeep
+!streamlit-summarizer/logs/README.md

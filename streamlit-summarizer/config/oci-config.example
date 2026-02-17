@@ -1,0 +1,14 @@
+[DEFAULT]
+user=ocid1.user.oc1..your_user_ocid_here
+fingerprint=your_key_fingerprint_here
+key_file=./oci-private-key.pem
+tenancy=ocid1.tenancy.oc1..your_tenancy_ocid_here
+region=us-ashburn-1
+
+# Example profile for different regions or users
+[US_WEST]
+user=ocid1.user.oc1..your_user_ocid_here
+fingerprint=your_key_fingerprint_here
+key_file=./oci-private-key.pem
+tenancy=ocid1.tenancy.oc1..your_tenancy_ocid_here
+region=us-phoenix-1 

@@ -1,0 +1,47 @@
+# Text Summarizer – application configuration
+# Edit this file to change app settings and add/remove AI models.
+# Restart the app after changing this file.
+
+[app]
+name = "Text Summarizer"
+version = "1.0"
+icon = "📝"
+
+# AI models: display name (shown in UI) -> OCI model_id (used for inference)
+# Add or remove entries here; descriptions go in [model_descriptions].
+[models]
+"OpenAI GPT-OSS 120b" = "openai.gpt-oss-120b"
+"google.gemini-2.5-pro" = "google.gemini-2.5-pro"
+"xai.grok-4-1-fast-non-reasoning" = "xai.grok-4-1-fast-non-reasoning"
+"Meta Llama 3.3 70B" = "meta.llama-3.3-70b-instruct"
+"meta.llama-4-scout-17b-16e-instruct" = "meta.llama-4-scout-17b-16e-instruct"
+"meta.llama-4-maverick-17b-128e-instruct-fp8" = "meta.llama-4-maverick-17b-128e-instruct-fp8"
+
+# Short description for each model (key must match [models] key).
+[model_descriptions]
+"OpenAI GPT-OSS 120b" = "Large open-weight model for summarization and long context."
+"google.gemini-2.5-pro" = "Gemini 2.5 Pro"
+"xai.grok-4-1-fast-non-reasoning" = "Grok 4.1 Fast (non-reasoning)"
+"Meta Llama 3.3 70B" = "Meta Llama 3.3 70B instruct model. Supports chunking for large documents."
+"meta.llama-4-scout-17b-16e-instruct" = "Llama 4 Scout 17B"
+"meta.llama-4-maverick-17b-128e-instruct-fp8" = "Llama 4 Maverick 17B"
+
+# Default prompt template. Use {} as placeholder for the document text.
+[prompt]
+default = """
+As an AI specialized in transcribing meeting notes, your principal function is to extract and distill pivotal information from business conversations, intentionally disregarding all superfluous comments, disclaimers, and warnings. Your outputs must stringently follow this protocol until notified otherwise. In particular, you are required to generate a succinct summary of the provided meeting transcript. This abstract should encapsulate details about the goal statement, user flow, outcome of the event, any praises from the customer and next steps. Document any important deadlines or time-sensitive information provided during the meeting as [additional information]. Include any [additional information] on potential collaborations, partnerships, or opportunities discussed during the meeting. Summary should only be in English, headers should use #, ## and use \\n for new line. Here are the contents: {}
+"""
+
+# Paths (relative to project root, or absolute)
+[paths]
+data_dir = "data"
+logs_dir = "logs"
+
+# Application limits and processing
+[processing]
+max_saved_prompts = 5
+max_file_size_mb = 200
+chunk_size_chars = 6000
+large_document_threshold = 8000
+progress_update_interval = 0.5
+monitor_thread_timeout = 1
