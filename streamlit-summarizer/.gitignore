@@ -1,0 +1,33 @@
+# Local secrets/config (never commit)
+config/oci-config
+config/config.yaml
+keys/
+
+# Data artifacts (allow saved prompts + gitkeeps)
+data/*.txt
+data/*.log
+data/temp*
+!data/saved_prompts.json
+!data/.gitkeep
+
+# Logs (structure only)
+logs/*.log
+logs/*.txt
+logs/*.out
+!logs/.gitkeep
+!logs/README.md
+
+# Streamlit cache/static
+.streamlit/
+
+# Environment / virtualenvs
+.env
+.env.*
+.venv/
+venv/
+
+# Misc
+*.tmp
+*.out
+*.bak
+*~
