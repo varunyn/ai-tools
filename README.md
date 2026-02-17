@@ -16,6 +16,9 @@ summarizer (docs, Docker setup, tests, etc.).
 2. Follow the per-app `README.md` / `AGENTS.md` for build, lint, and test commands.
 3. Keep shared tooling (e.g., `.gitignore`, common docs) at the repository root when possible.
 4. Use meaningful commits (conventional wording preferred) and avoid committing secrets
-   (`config/`, `keys/`, `.env`, etc.).
+   (`config/`, `keys/`, `.env`, etc.). Each app maintains its own `.gitignore` to keep
+   sensitive files (e.g., `streamlit-summarizer/keys/`) out of version control. For
+   non-Docker workflows you can rely on your system `~/.oci/config`; for Docker follow the
+   per-app docs to place OCI credentials under the app directory.
 
 Future apps can be added under new subdirectories alongside `streamlit-summarizer/`.

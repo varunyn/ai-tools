@@ -66,7 +66,7 @@ This is a Streamlit application that uses OCI Generative AI to summarize text co
 
 ### Configuration
 
-1. Create a `config.yaml` file in the `streamlit-summarizer` directory using the provided example:
+1. Create a `config.yaml` file in the `streamlit-summarizer` directory using the provided example (remember that `config/` and `keys/` are **not** tracked in git—you must create them locally):
 
    ```bash
    cp config.yaml.example config.yaml
@@ -79,7 +79,10 @@ This is a Streamlit application that uses OCI Generative AI to summarize text co
    config_profile: "DEFAULT" # or your specific profile name from ~/.oci/config
    ```
 
-3. Ensure your OCI configuration file (`~/.oci/config`) has the necessary credentials for accessing OCI Generative AI services.
+3. Decide how you want to supply OCI credentials:
+   - **Local (non-Docker) runs:** rely on your system `~/.oci/config`. No files under `streamlit-summarizer/keys/` are required; just ensure the profile referenced in `config.yaml` exists.
+   - **Docker runs:** create `streamlit-summarizer/config/` and `streamlit-summarizer/keys/`, then place `config/oci-config` plus `keys/oci-private-key.pem` inside. Compose files mount these into the container, so secrets stay outside git.
+4. Ensure the OCI configuration you chose (`~/.oci/config` or `config/oci-config`) references the correct private key path and has permissions for your compartment.
 
 ## Running the App
 
@@ -104,10 +107,10 @@ Keep your OCI credentials in the project directory for easier management:
    ./docker/docker-setup.sh
    ```
 
-2. The script will create `oci-config` and guide you to:
+2. The script will create `config/oci-config` (from the example) and `config/config.yaml`, then guide you to:
    - Edit `oci-config` with your OCI credentials
-   - Place your private key as `oci-private-key.pem`
-   - Configure `config.yaml` with your compartment details
+    - Place your private key as `keys/oci-private-key.pem`
+    - Configure `config/config.yaml` with your compartment details
    - **Important**: Update the `key_file` path in `oci-config` to `/home/appuser/.oci/oci-private-key.pem` (this is the home directory of the user running Streamlit inside the container)
    - The compose file also mounts your credentials into `/root/.oci` for compatibility, but the application actually runs as `appuser`, so the `/home/appuser/.oci/...` path must exist
 
