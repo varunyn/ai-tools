@@ -1,0 +1,33 @@
+services:
+  backend:
+    image: nextjs-oci-openai-backend
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "3001:3001"
+    env_file:
+      - ./backend/.env
+    environment:
+      - OCI_CONFIG_FILE=/app/oci-config
+    volumes:
+      - ./backend/oci-config:/app/oci-config
+      # Mount your OCI API key so the in-container config can find it.
+      # Uncomment and set the left side to your key path (e.g. ${OCI_KEY_FILE} or a fixed path).
+      # - ${OCI_KEY_FILE:-/path/to/your/oci_api_key.pem}:/app/oci_api_key.pem
+
+  frontend:
+    image: nextjs-oci-openai-frontend
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3040:3000"
+    environment:
+      - FASTAPI_BACKEND_URL=http://backend:3001
+    depends_on:
+      - backend
+
+networks:
+  open-webui-network:
+    external: true

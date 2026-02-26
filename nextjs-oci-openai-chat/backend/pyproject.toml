@@ -1,0 +1,36 @@
+[project]
+name = "oci-chat-backend"
+version = "0.1.0"
+description = "FastAPI backend for OCI OpenAI chat application"
+requires-python = ">=3.10"
+dependencies = [
+    "fastapi>=0.128.0",
+    "uvicorn>=0.39.0",
+    "python-dotenv>=1.2.0",
+    "oci>=2.166.0",
+    "oci-openai>=1.0.0",
+    "openai>=2.16.0",
+    "pydantic>=2.12.5",
+    "oracledb>=3.4.2",
+    "sentence-transformers>=5.1.2",
+    "oci-cli>=3.73.0",
+    "fastmcp>=2.14.4",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["."]
+
+[tool.pytest.ini_options]
+# Tools package lives at repo root; add parent so "import tools" works when running pytest from backend
+pythonpath = [".."]
+
+[tool.uv]
+dev-dependencies = [
+    "pytest>=9.0.2",
+    "black>=25.11.0",
+    "flake8>=6.1.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
