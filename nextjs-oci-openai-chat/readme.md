@@ -54,8 +54,13 @@ See **backend/Readme.md** for backend API, tests, and OCI setup. Use **pnpm** fo
 
 ## Docker
 
-From the repo root: `docker compose up -d`. Backend: http://localhost:3001, frontend: http://localhost:3040.  
-The backend container needs your OCI API key: in `docker-compose.yml`, uncomment the key volume line and set the host path (e.g. `${OCI_KEY_FILE}` with `OCI_KEY_FILE` in a `.env` file). Ensure `backend/oci-config` key_file path matches the path inside the container.
+From the repo root: `docker compose up -d`. Backend: http://localhost:3001, frontend: http://localhost:3040.
+
+**How the backend reads OCI config:**
+
+1. Copy your OCI config to **`backend/oci-config`** (e.g. from `~/.oci/config`). Docker Compose mounts it into the container as **`/app/oci-config`**.
+2. The backend is started with **`OCI_CONFIG_FILE=/app/oci-config`** (set in `docker-compose.yml`), so it reads that file inside the container.
+3. Your `backend/oci-config` file contains a `key_file=...` path. That path must exist **inside the container**. So either set `key_file=/app/oci_api_key.pem` (or similar) in the config, then in `docker-compose.yml` uncomment the key volume line and mount your key: e.g. `- ${OCI_KEY_FILE}:/app/oci_api_key.pem` with `OCI_KEY_FILE` in a `.env` file pointing to your key on the host.
 
 ## Env (minimal)
 

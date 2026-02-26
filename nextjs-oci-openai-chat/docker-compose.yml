@@ -11,6 +11,7 @@ services:
     environment:
       - OCI_CONFIG_FILE=/app/oci-config
     volumes:
+      # Mount OCI config (copy from ~/.oci/config to backend/oci-config). App reads /app/oci-config.
       - ./backend/oci-config:/app/oci-config
       # Mount your OCI API key so the in-container config can find it.
       # Uncomment and set the left side to your key path (e.g. ${OCI_KEY_FILE} or a fixed path).
