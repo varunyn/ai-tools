@@ -1,0 +1,29 @@
+.DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+
+# Node / Next.js
+node_modules/
+.next/
+dist/
+build/
+coverage/
+
+# Environment and secrets
+.env
+oci_api_key.pem
+
+# Logs
+logs/
+*.log
+*.har
+
+# Editor settings
+.vscode/
+.idea/
+*.swp

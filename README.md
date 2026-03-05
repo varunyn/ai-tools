@@ -12,6 +12,9 @@ summarizer (docs, Docker setup, tests, etc.).
   documents and generating summaries using OCI Generative AI. See that folder’s README for
   full setup instructions (Docker, uv, testing, OCI configuration, E2E Playwright suite).
 
+- [`nextjs-streamlit-oci-realtime-speech/`](nextjs-streamlit-oci-realtime-speech/) – Real-time speech transcription with Streamlit + Next.js, backed by Oracle AI Speech.
+  See that folder’s README for full setup instructions (Python uv + Node, .env).
+
 ## Contributing
 
 1. Clone the repo and work inside the relevant app directory (e.g., `cd streamlit-summarizer`).
