@@ -71,7 +71,7 @@ docker-compose.override.yml
 
 # Environment variables
 .env
-.env.*
+.env.local
 
 # Project-specific (streamlit-summarizer app)
 streamlit-summarizer/config/oci-config
