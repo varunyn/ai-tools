@@ -45,9 +45,6 @@ Run from **backend** directory:
 
 - `./scripts/start_fastapi.sh` — Start dev server (reload)
 - `./scripts/test_chat_curl.sh [BASE_URL]` — Smoke test `/v1/chat/completions` (text + streaming)
-- `./scripts/test_rag_tool.sh [BASE_URL]` — Ensures RAG tool_calls are forwarded (no execution)
-- `./scripts/test_tools.sh [BASE_URL]` — Generic tool forwarding check (non-stream + stream)
-- `uv run python scripts/run_conversation_create_test.py` — Exercise the responses/conversation create flow
 
 ## Tests
 
