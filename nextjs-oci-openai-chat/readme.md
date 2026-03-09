@@ -4,6 +4,16 @@ Chat UI and API that let you use **Oracle Cloud Generative AI** with the same pa
 
 **Stack:** Next.js (frontend) + FastAPI (backend) with OCI GenAI. Frontend uses the Vercel AI SDK and calls the backend’s `/v1/chat/completions`
 
+## Screenshots
+
+### App UI
+
+![OCI OpenAI Chat app UI](images/app.png)
+
+### Model Selection
+
+![Model list and chooser](images/choose-model.png)
+
 ## Stack
 
 - **Frontend:** Next.js 16, React 19, TypeScript, Tailwind, AI SDK v6, pnpm
