@@ -12,10 +12,11 @@ services:
       - OCI_CONFIG_FILE=/app/oci-config
     volumes:
       # Mount OCI config (copy from ~/.oci/config to backend/oci-config). App reads /app/oci-config.
+      # In backend/oci-config set key_file=/app/oci_api_key.pem (container path).
       - ./backend/oci-config:/app/oci-config
-      # Mount your OCI API key so the in-container config can find it.
-      # Uncomment and set the left side to your key path (e.g. ${OCI_KEY_FILE} or a fixed path).
-      # - ${OCI_KEY_FILE:-/path/to/your/oci_api_key.pem}:/app/oci_api_key.pem
+      # Mount OCI API key: set OCI_KEY_FILE in .env (this folder, next to docker-compose.yml) to your key path on the host.
+      # When unset, /dev/null is mounted so compose doesn't fail (backend will fail until you set OCI_KEY_FILE).
+      - ${OCI_KEY_FILE:-/dev/null}:/app/oci_api_key.pem
 
   frontend:
     image: nextjs-oci-openai-frontend

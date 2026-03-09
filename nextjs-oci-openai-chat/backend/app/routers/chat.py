@@ -12,6 +12,7 @@ from app.utils import (
     _assistant_tool_response,
     _run_completion,
     _shorten,
+    _to_jsonable,
     _tool_call_arguments,
     _tool_call_name,
     create_openai_error,
@@ -147,31 +148,46 @@ async def chat_completions_openai(request: OpenAIChatRequest):
         if request.stream:
             async def generate_stream():
                 try:
-                    first_resp = await _run_completion(
+                    stream_resp = await _run_completion(
                         model=request.model,
                         messages=messages_data,
                         temperature=request.temperature,
                         max_tokens=request.max_tokens,
                         tools=tools,
-                        stream=False,
+                        stream=True,
                     )
-                    first_msg = first_resp.choices[0].message
 
+                    if hasattr(stream_resp, "__iter__"):
+                        stream_iter = iter(stream_resp)
+                        saw_finish = False
+                        loop = asyncio.get_event_loop()
+
+                        while True:
+                            sentinel = object()
+                            chunk = await loop.run_in_executor(None, lambda: next(stream_iter, sentinel))
+                            if chunk is sentinel:
+                                break
+
+                            chunk_json = _to_jsonable(chunk)
+                            if isinstance(chunk_json, dict):
+                                try:
+                                    choices = chunk_json.get("choices")
+                                    if isinstance(choices, list):
+                                        for choice in choices:
+                                            if isinstance(choice, dict) and choice.get("finish_reason") is not None:
+                                                saw_finish = True
+                                except Exception:
+                                    pass
+                                yield f"data: {json.dumps(chunk_json)}\n\n"
+
+                        if not saw_finish:
+                            chunk_id = f"chatcmpl-{int(time.time())}"
+                            yield f"data: {json.dumps({'id': chunk_id, 'object': 'chat.completion.chunk', 'created': int(time.time()), 'model': request.model, 'choices': [{'index': 0, 'delta': {}, 'finish_reason': 'stop'}]})}\n\n"
+                        yield "data: [DONE]\n\n"
+                        return
+
+                    first_msg = stream_resp.choices[0].message
                     if hasattr(first_msg, "tool_calls") and first_msg.tool_calls:
-                        try:
-                            tc_infos = []
-                            for tc in first_msg.tool_calls:
-                                tc_id = tc.get("id", "") if isinstance(tc, dict) else getattr(tc, "id", "")
-                                name = _tool_call_name(tc) or ""
-                                tc_infos.append({"id": tc_id, "name": name})
-                            print(f"🔧 tool_calls: {len(tc_infos)} → {tc_infos} | forwarding_to_client=True")
-                        except Exception:
-                            pass
-                    if hasattr(first_msg, "tool_calls") and first_msg.tool_calls:
-                        try:
-                            print("↪️ forwarding tool_calls to client (streaming)")
-                        except Exception:
-                            pass
                         chunk_id = f"chatcmpl-{int(time.time())}"
                         yield f"data: {json.dumps({'id': chunk_id, 'object': 'chat.completion.chunk', 'created': int(time.time()), 'model': request.model, 'choices': [{'index': 0, 'delta': {'role': 'assistant'}, 'finish_reason': None}]})}\n\n"
                         for i, tc in enumerate(first_msg.tool_calls):
@@ -182,30 +198,13 @@ async def chat_completions_openai(request: OpenAIChatRequest):
                         yield f"data: {json.dumps({'id': chunk_id, 'object': 'chat.completion.chunk', 'created': int(time.time()), 'model': request.model, 'choices': [{'index': 0, 'delta': {}, 'finish_reason': 'tool_calls'}]})}\n\n"
                         yield "data: [DONE]\n\n"
                         return
-                    else:
-                        content = (getattr(first_msg, "content", None) or "").strip()
-                        if not content:
-                            content = "(No response generated.)"
 
+                    content = (getattr(first_msg, "content", None) or "").strip() or "(No response generated.)"
                     chunk_id = f"chatcmpl-{int(time.time())}"
-                    init_chunk = {
-                        "id": chunk_id,
-                        "object": "chat.completion.chunk",
-                        "created": int(time.time()),
-                        "model": request.model,
-                        "choices": [{"index": 0, "delta": {"role": "assistant"}, "finish_reason": None}],
-                    }
-                    yield f"data: {json.dumps(init_chunk)}\n\n"
+                    yield f"data: {json.dumps({'id': chunk_id, 'object': 'chat.completion.chunk', 'created': int(time.time()), 'model': request.model, 'choices': [{'index': 0, 'delta': {'role': 'assistant'}, 'finish_reason': None}]})}\n\n"
                     for i in range(0, len(content), 64):
                         piece = content[i : i + 64]
-                        response_chunk = {
-                            "id": chunk_id,
-                            "object": "chat.completion.chunk",
-                            "created": int(time.time()),
-                            "model": request.model,
-                            "choices": [{"index": 0, "delta": {"content": piece}, "finish_reason": None}],
-                        }
-                        yield f"data: {json.dumps(response_chunk)}\n\n"
+                        yield f"data: {json.dumps({'id': chunk_id, 'object': 'chat.completion.chunk', 'created': int(time.time()), 'model': request.model, 'choices': [{'index': 0, 'delta': {'content': piece}, 'finish_reason': None}]})}\n\n"
                     yield f"data: {json.dumps({'id': chunk_id, 'object': 'chat.completion.chunk', 'created': int(time.time()), 'model': request.model, 'choices': [{'index': 0, 'delta': {}, 'finish_reason': 'stop'}]})}\n\n"
                     yield "data: [DONE]\n\n"
                 except Exception as stream_err:
