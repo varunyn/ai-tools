@@ -110,3 +110,5 @@ streamlit-summarizer/logs/*.out
 # But allow .gitkeep and README files
 !streamlit-summarizer/logs/.gitkeep
 !streamlit-summarizer/logs/README.md
+
+.cursor/
