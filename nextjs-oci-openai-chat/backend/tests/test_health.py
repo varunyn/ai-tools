@@ -34,10 +34,3 @@ def test_health_endpoint(client):
     assert response.status_code == 200
     data = response.json()
     assert data["status"] == "healthy"
-
-
-def test_api_tools_empty_list(client):
-    response = client.get("/api/tools")
-    assert response.status_code == 200
-    data = response.json()
-    assert data["tools"] == []

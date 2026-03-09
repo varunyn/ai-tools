@@ -32,7 +32,3 @@ async def v1_root() -> dict[str, object]:
 @router.get("/health")
 async def health() -> dict[str, str]:
     return {"status": "healthy"}
-
-@router.get("/api/tools")
-async def get_tools() -> dict[str, list[dict[str, object]]]:
-    return {"tools": []}

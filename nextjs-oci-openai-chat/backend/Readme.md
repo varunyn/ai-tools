@@ -28,6 +28,11 @@ The FastAPI client reads credentials from an OCI config file. By default it look
 
 **Tools are not enabled by default.** This backend only forwards `tool_calls`; clients (Next.js server, Open WebUI, or any external helper service) must declare tools in the request and execute them.
 
+## API documentation
+
+- Full endpoint reference: [`docs/api-reference.md`](docs/api-reference.md)
+- Recommended usage: keep this README for setup/operations and keep endpoint-level details in the API reference file.
+
 ## Structure
 
 | Path           | Purpose                                                                                         |
@@ -35,7 +40,7 @@ The FastAPI client reads credentials from an OCI config file. By default it look
 | `app/main.py`  | FastAPI app entrypoint (uvicorn target `app.main:app`)                                          |
 | `app/routers/` | Chat, models, health, responses                                                                 |
 | `tests/`       | Pytest tests (health, models, chat, responses, utils); see [Tests](#tests)                      |
-| `scripts/`     | Dev/test helpers (`start_fastapi.sh`, `test_chat_curl.sh`, `test_rag_tool.sh`, `test_tools.sh`) |
+| `scripts/`     | Dev/test helpers (`start_fastapi.sh`, `test_chat_curl.sh`) |
 | `env.example`  | Required and optional environment variables                                                     |
 | `oci-config`   | Local OCI config file used by default (override with `OCI_CONFIG_FILE`)                         |
 
@@ -73,7 +78,7 @@ Live OCI tests (e.g. in `test_chat_completions.py`: `test_chat_completion_live`,
 
 | File                       | What it covers                                                                                                    |
 | -------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| `test_health.py`           | Root `/`, `/v1`, `/health`, `/api/tools` responses                                                                |
+| `test_health.py`           | Root `/`, `/v1`, `/health` responses                                                                               |
 | `test_models.py`           | `/api/chat/models`, `/v1/models`, `/v1/tags` (OpenAI/Ollama shapes)                                               |
 | `test_chat_api.py`         | `POST /api/chat`: happy path, tool forwarding, client/compartment/messages errors                                 |
 | `test_chat_completions.py` | `POST /v1/chat/completions`: streaming/non-stream, tool_calls, validation/HTTP error envelopes, live OCI (skipif) |
