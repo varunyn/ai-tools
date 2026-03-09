@@ -26,31 +26,18 @@ The FastAPI client reads credentials from an OCI config file. By default it look
 
 ## Tool forwarding contract
 
-**Tools are not enabled by default.** This backend only forwards `tool_calls`; clients (Next.js server, Open WebUI, or any helper you run from the repo root) must declare tools in the request and execute them.
-
-- Treat `tools/` at the repo root as the place to run helper clients or MCP servers. See its README for instructions; this backend README simply describes the proxy responsibilities.
-- Oracle RAG support still requires the same Oracle table + environment variables, but ingestion/search helpers should be run from `tools/` rather than here.
-
-### Oracle RAG requirements (backend view)
-
-To enable the `search_knowledge_base` tool end-to-end you need:
-
-1. **Oracle 23ai** with a `{org}_web_embeddings` table (schema + embedding notes live under `../tools/docs/`).
-2. **Environment variables** set in `backend/.env` for the Oracle connection metadata (see comments in `env.example`).
-3. **Clients** capable of ingesting/searching: run those from the root `tools/` helpers; only their outputs are forwarded through this backend.
-
-For Oracle Cloud / wallet-based connections, backend operators should still consult [docs/INTEGRATION_IMPROVEMENTS.md](docs/INTEGRATION_IMPROVEMENTS.md) (wallet paths, OCI embeddings, logging conventions).
+**Tools are not enabled by default.** This backend only forwards `tool_calls`; clients (Next.js server, Open WebUI, or any external helper service) must declare tools in the request and execute them.
 
 ## Structure
 
-| Path           | Purpose                                                                              |
-| -------------- | ------------------------------------------------------------------------------------ |
-| `app/main.py`  | FastAPI app entrypoint (uvicorn target `app.main:app`)                               |
-| `app/routers/` | Chat, models, health, responses                                                      |
-| `tests/`       | Pytest tests (health, models, chat, responses, utils); see [Tests](#tests)           |
-| `docs/`        | Backend-side integration docs (tool contract, OCI/Oracle wallet notes)               |
-| `scripts/`     | `start_fastapi.sh`, `test_chat_curl.sh`, `test_rag_tool.sh`, `test_tools.sh`         |
-| `sql/`         | `create_tables.sql` — example `{org}_web_embeddings` table (only if using RAG tools) |
+| Path           | Purpose                                                                                         |
+| -------------- | ----------------------------------------------------------------------------------------------- |
+| `app/main.py`  | FastAPI app entrypoint (uvicorn target `app.main:app`)                                          |
+| `app/routers/` | Chat, models, health, responses                                                                 |
+| `tests/`       | Pytest tests (health, models, chat, responses, utils); see [Tests](#tests)                      |
+| `scripts/`     | Dev/test helpers (`start_fastapi.sh`, `test_chat_curl.sh`, `test_rag_tool.sh`, `test_tools.sh`) |
+| `env.example`  | Required and optional environment variables                                                     |
+| `oci-config`   | Local OCI config file used by default (override with `OCI_CONFIG_FILE`)                         |
 
 ## Scripts
 
@@ -60,6 +47,7 @@ Run from **backend** directory:
 - `./scripts/test_chat_curl.sh [BASE_URL]` — Smoke test `/v1/chat/completions` (text + streaming)
 - `./scripts/test_rag_tool.sh [BASE_URL]` — Ensures RAG tool_calls are forwarded (no execution)
 - `./scripts/test_tools.sh [BASE_URL]` — Generic tool forwarding check (non-stream + stream)
+- `uv run python scripts/run_conversation_create_test.py` — Exercise the responses/conversation create flow
 
 ## Tests
 
