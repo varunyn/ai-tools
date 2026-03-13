@@ -1,6 +1,7 @@
 services:
   backend:
     image: nextjs-oci-openai-backend
+    container_name: nextjs-oci-openai-backend
     build:
       context: ./backend
       dockerfile: Dockerfile
@@ -10,6 +11,9 @@ services:
       - ./backend/.env
     environment:
       - OCI_CONFIG_FILE=/app/oci-config
+    networks:
+      - default
+      - shared
     volumes:
       # Mount OCI config (copy from ~/.oci/config to backend/oci-config). App reads /app/oci-config.
       # In backend/oci-config set key_file=/app/oci_api_key.pem (container path).
@@ -29,7 +33,14 @@ services:
       - FASTAPI_BACKEND_URL=http://backend:3001
     depends_on:
       - backend
+    networks:
+      - default
 
 networks:
-  open-webui-network:
-    external: true
+  default:
+    name: nextjs-oci-openai-chat_default
+    driver: bridge
+  # Created by this stack. Other stacks (e.g. Open WebUI) attach with external: true and reach backend at http://nextjs-oci-openai-backend:3001
+  shared:
+    name: nextjs-oci-openai-backend-shared
+    driver: bridge
