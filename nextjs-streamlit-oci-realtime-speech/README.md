@@ -15,6 +15,13 @@ Local-first speech transcription project with two UIs backed by Oracle Cloud Inf
 - Python websocket backend with health/readiness checks
 - Live transcript updates, copy/download support, and basic troubleshooting paths
 
+## Demo
+
+See both app experiences before running locally:
+
+- **Streamlit app demo**: [assets/Streamlit_live_transcript.mp4](assets/Streamlit_live_transcript.mp4)
+- **Next.js app demo**: [assets/nextjs_live_transcript.mp4](assets/nextjs_live_transcript.mp4)
+
 ## Runtime flow (Mermaid)
 
 This diagram shows the primary interaction paths: direct Streamlit recording and the Next.js client streaming audio to the Python websocket backend, which forwards audio to Oracle AI Speech and returns transcript updates.
