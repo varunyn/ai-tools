@@ -19,7 +19,8 @@ Local-first speech transcription project with two UIs backed by Oracle Cloud Inf
 
 See both app experiences before running locally:
 
-- **Streamlit app demo**: [assets/Streamlit_live_transcript.mp4](assets/Streamlit_live_transcript.mp4)
+- **Streamlit app demo**:
+https://github.com/user-attachments/assets/0862ab92-8799-49f2-8a2d-9f09dbadfb0b
 - **Next.js app demo**: [assets/nextjs_live_transcript.mp4](assets/nextjs_live_transcript.mp4)
 
 ## Runtime flow (Mermaid)
