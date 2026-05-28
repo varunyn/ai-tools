@@ -5,7 +5,7 @@ description = "Real-time speech transcription using Oracle AI Speech services"
 requires-python = ">=3.12"
 dependencies = [
     "oci>=2.168.0",
-    "streamlit>=1.55.0",
+    "streamlit==1.56.0",
     "python-dotenv>=1.2.2",
     "sounddevice>=0.5.5",
     "numpy>=2.4.2",
