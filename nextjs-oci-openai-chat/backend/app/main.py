@@ -20,20 +20,26 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 @app.middleware("http")
-async def log_requests(request: Request, call_next: Callable[[Request], Awaitable[Response]]) -> Response:
+async def log_requests(
+    request: Request, call_next: Callable[[Request], Awaitable[Response]]
+) -> Response:
     print(f"DEBUG REQUEST: {request.method} {request.url.path}")
     response = await call_next(request)
     print(f"DEBUG RESPONSE: {response.status_code}")
     return response
 
+
 @app.exception_handler(HTTPException)
 async def http_exception_handler(_request: Request, exc: HTTPException):
     return create_openai_error(message=exc.detail, status_code=exc.status_code)
 
+
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(_request: Request, exc: RequestValidationError):
     return create_openai_error(message=str(exc), status_code=400)
+
 
 app.include_router(health_router.router)
 app.include_router(models_router.router)

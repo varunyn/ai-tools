@@ -16,22 +16,33 @@ def test_tool_call_name_arguments_dict_shape():
 
 
 def test_tool_call_name_arguments_object_shape():
-    tc = SimpleNamespace(function=SimpleNamespace(name="calculator", arguments='{"expr":"2+2"}'))
+    tc = SimpleNamespace(
+        function=SimpleNamespace(name="calculator", arguments='{"expr":"2+2"}')
+    )
     assert _tool_call_name(tc) == "calculator"
     assert _tool_call_arguments(tc) == '{"expr":"2+2"}'
 
 
 def test_assistant_tool_response_normalizes_multiple_tool_calls():
-    dict_tc_missing_args = {"id": "call_1", "type": "function", "function": {"name": "calculator"}}
+    dict_tc_missing_args = {
+        "id": "call_1",
+        "type": "function",
+        "function": {"name": "calculator"},
+    }
 
     obj_tc_default_type = SimpleNamespace(
         id="call_2",
         function=SimpleNamespace(name="search_knowledge_base", arguments='{"q":"oci"}'),
     )
 
-    obj_tc_missing_args = SimpleNamespace(id="call_3", type="function", function=SimpleNamespace(name="noop"))
+    obj_tc_missing_args = SimpleNamespace(
+        id="call_3", type="function", function=SimpleNamespace(name="noop")
+    )
 
-    message = SimpleNamespace(content=None, tool_calls=[dict_tc_missing_args, obj_tc_default_type, obj_tc_missing_args])
+    message = SimpleNamespace(
+        content=None,
+        tool_calls=[dict_tc_missing_args, obj_tc_default_type, obj_tc_missing_args],
+    )
     out = _assistant_tool_response(message)
 
     assert out["role"] == "assistant"

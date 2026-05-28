@@ -1,28 +1,15 @@
 # pyright: reportUnknownParameterType=false, reportMissingParameterType=false, reportUnknownMemberType=false, reportUnknownVariableType=false, reportUnknownArgumentType=false, reportUnusedParameter=false
-import pytest
-from fastapi.testclient import TestClient
-
-from app.main import app as main_app
 
 
-@pytest.fixture()
-def client():
-    return TestClient(main_app)
-
-
-def test_api_chat_models_returns_available_models(client):
-    response = client.get("/api/chat/models")
-    assert response.status_code == 200
-    data = response.json()
+def test_api_chat_models_returns_available_models(get_json_ok):
+    data = get_json_ok("/api/chat/models")
     assert "models" in data
     assert isinstance(data["models"], list)
     assert len(data["models"]) > 0
 
 
-def test_v1_models_openai_list_shape(client):
-    response = client.get("/v1/models")
-    assert response.status_code == 200
-    data = response.json()
+def test_v1_models_openai_list_shape(get_json_ok):
+    data = get_json_ok("/v1/models")
     assert data["object"] == "list"
     assert "data" in data
     assert isinstance(data["data"], list)
@@ -38,10 +25,8 @@ def test_v1_models_openai_list_shape(client):
         assert "parent" in model
 
 
-def test_v1_tags_ollama_shape(client):
-    response = client.get("/v1/tags")
-    assert response.status_code == 200
-    data = response.json()
+def test_v1_tags_ollama_shape(get_json_ok):
+    data = get_json_ok("/v1/tags")
     assert "models" in data
     assert isinstance(data["models"], list)
     assert len(data["models"]) > 0

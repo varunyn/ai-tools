@@ -7,9 +7,11 @@ from app.config import AVAILABLE_MODELS
 
 router = APIRouter()
 
+
 @router.get("/api/chat/models")
 async def get_models() -> dict[str, list[dict[str, object]]]:
     return {"models": AVAILABLE_MODELS}
+
 
 @router.get("/v1/models")
 @router.get("/api/v1/models")
@@ -30,6 +32,7 @@ async def get_models_openai() -> dict[str, object]:
             }
         )
     return {"object": "list", "data": models_data}
+
 
 @router.get("/api/tags")
 @router.get("/v1/tags")

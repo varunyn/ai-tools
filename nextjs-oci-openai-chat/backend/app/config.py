@@ -28,7 +28,11 @@ def _base_without_actions_v1(url: str) -> str:
 
 
 OCI_API_BASE_URL: str = _base_without_actions_v1(_oci_genai_base)
-OCI_CHAT_BASE_URL: str = f"{_oci_genai_base}/actions/v1" if "/actions/v1" not in _oci_genai_base else _oci_genai_base
+OCI_CHAT_BASE_URL: str = (
+    f"{_oci_genai_base}/actions/v1"
+    if "/actions/v1" not in _oci_genai_base
+    else _oci_genai_base
+)
 
 # Available models configuration (copied as-is)
 AVAILABLE_MODELS: List[Dict[str, Any]] = [
@@ -68,15 +72,15 @@ AVAILABLE_MODELS: List[Dict[str, Any]] = [
         "providers": ["oci"],
     },
     {
-        "id": "xai.grok-4-fast-reasoning",
-        "name": "Grok 4 Fast (Reasoning)",
+        "id": "xai.grok-4.20-0309-reasoning",
+        "name": "Grok 4.20(Reasoning)",
         "chef": "xAI",
         "chefSlug": "xai",
         "providers": ["oci"],
     },
     {
-        "id": "xai.grok-4-fast-non-reasoning",
-        "name": "Grok 4 Fast",
+        "id": "xai.grok-4.20-0309-non-reasoning",
+        "name": "Grok 4.20",
         "chef": "xAI",
         "chefSlug": "xai",
         "providers": ["oci"],
@@ -93,12 +97,16 @@ if oci_config_file.startswith("~"):
 try:
     client_chat = OciOpenAI(
         base_url=OCI_CHAT_BASE_URL,
-        auth=OciUserPrincipalAuth(config_file=oci_config_file, profile_name=oci_profile),
+        auth=OciUserPrincipalAuth(
+            config_file=oci_config_file, profile_name=oci_profile
+        ),
         compartment_id=cast(Any, compartment_id),
     )
     client_api = OciOpenAI(
         base_url=OCI_API_BASE_URL,
-        auth=OciUserPrincipalAuth(config_file=oci_config_file, profile_name=oci_profile),
+        auth=OciUserPrincipalAuth(
+            config_file=oci_config_file, profile_name=oci_profile
+        ),
         compartment_id=cast(Any, compartment_id),
     )
     # default for any code that only uses chat

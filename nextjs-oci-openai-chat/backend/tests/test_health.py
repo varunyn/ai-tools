@@ -1,18 +1,5 @@
-import pytest
-from fastapi.testclient import TestClient
-
-from app.main import app as main_app
-
-
-@pytest.fixture
-def client():
-    return TestClient(main_app)
-
-
-def test_root_returns_service_info(client):
-    response = client.get("/")
-    assert response.status_code == 200
-    data = response.json()
+def test_root_returns_service_info(get_json_ok):
+    data = get_json_ok("/")
     assert data["status"] == "ok"
     assert "service" in data
     assert isinstance(data["endpoints"], dict)
@@ -29,8 +16,6 @@ def test_v1_root_and_trailing_slash(client):
         assert isinstance(data["endpoints"], dict)
 
 
-def test_health_endpoint(client):
-    response = client.get("/health")
-    assert response.status_code == 200
-    data = response.json()
+def test_health_endpoint(get_json_ok):
+    data = get_json_ok("/health")
     assert data["status"] == "healthy"

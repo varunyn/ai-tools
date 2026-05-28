@@ -10,6 +10,7 @@ from app.routers import chat as chat_module
 
 try:
     from dotenv import load_dotenv
+
     load_dotenv()
 except Exception:
     pass
@@ -21,6 +22,7 @@ def _oci_configured() -> bool:
         return False
     try:
         from app.config import client, compartment_id
+
         return client is not None and compartment_id is not None
     except Exception:
         return False
@@ -61,6 +63,14 @@ def _mock_run_completion(monkeypatch, factory):
     monkeypatch.setattr(chat_module, "_run_completion", _fake_run_completion)
 
 
+def _mock_run_completion_with_capture(monkeypatch, captured_kwargs, factory):
+    async def _fake_run_completion(**kwargs):
+        captured_kwargs.update(kwargs)
+        return factory()
+
+    monkeypatch.setattr(chat_module, "_run_completion", _fake_run_completion)
+
+
 def test_non_stream_tool_call_forwarded(monkeypatch, api_client):
     _mock_run_completion(monkeypatch, lambda: _completion_with_tool("run_oci_command"))
 
@@ -88,7 +98,9 @@ def test_non_stream_tool_call_forwarded(monkeypatch, api_client):
 
 
 def test_streaming_plain_text_chunks(monkeypatch, api_client):
-    _mock_run_completion(monkeypatch, lambda: _completion_with_content("Hello from backend"))
+    _mock_run_completion(
+        monkeypatch, lambda: _completion_with_content("Hello from backend")
+    )
 
     payload = {
         "model": "meta.llama-test",
@@ -106,7 +118,9 @@ def test_streaming_plain_text_chunks(monkeypatch, api_client):
 
 
 def test_streaming_tool_call_forwarded(monkeypatch, api_client):
-    _mock_run_completion(monkeypatch, lambda: _completion_with_tool("search_knowledge_base"))
+    _mock_run_completion(
+        monkeypatch, lambda: _completion_with_tool("search_knowledge_base")
+    )
 
     payload = {
         "model": "meta.llama-test",
@@ -187,19 +201,54 @@ def test_accepts_tool_role_messages(monkeypatch, api_client):
     assert choice["finish_reason"] == "stop"
 
 
-def _assert_openai_error_envelope(body: dict[str, object]):
-    assert isinstance(body, dict)
-    assert "error" in body
-    err = body["error"]
-    assert isinstance(err, dict)
-    assert "message" in err
-    assert "type" in err
-    assert "param" in err
-    assert "code" in err
-    return err
+def test_non_stream_forwards_response_format_and_modern_fields(
+    monkeypatch, api_client, strict_json_schema
+):
+    captured_kwargs: dict[str, object] = {}
+    _mock_run_completion_with_capture(
+        monkeypatch, captured_kwargs, lambda: _completion_with_content("structured")
+    )
+
+    response_format = {
+        "type": "json_schema",
+        "json_schema": strict_json_schema(
+            "catalog_selection",
+            {"selected": {"type": "string"}},
+            ["selected"],
+        ),
+    }
+
+    payload = {
+        "model": "meta.llama-test",
+        "messages": [{"role": "user", "content": "Pick one item"}],
+        "response_format": response_format,
+        "tool_choice": "auto",
+        "parallel_tool_calls": False,
+        "stream_options": {"include_usage": True},
+        "metadata": {"workflow": "catalog-selection"},
+        "user": "user-123",
+        "store": True,
+        "max_completion_tokens": 321,
+        "stream": False,
+    }
+
+    response = api_client.post("/v1/chat/completions", json=payload)
+    assert response.status_code == 200
+    assert response.json()["choices"][0]["message"]["content"] == "structured"
+
+    assert captured_kwargs["response_format"] == response_format
+    assert captured_kwargs["tool_choice"] == "auto"
+    assert captured_kwargs["parallel_tool_calls"] is False
+    assert captured_kwargs["stream_options"] == {"include_usage": True}
+    assert captured_kwargs["metadata"] == {"workflow": "catalog-selection"}
+    assert captured_kwargs["user"] == "user-123"
+    assert captured_kwargs["store"] is True
+    assert captured_kwargs["max_completion_tokens"] == 321
 
 
-def test_validation_error_returns_openai_envelope(api_client):
+def test_validation_error_returns_openai_envelope(
+    api_client, assert_openai_error_envelope
+):
     payload = {
         "messages": [{"role": "user", "content": "Hi"}],
         "stream": False,
@@ -207,13 +256,15 @@ def test_validation_error_returns_openai_envelope(api_client):
 
     response = api_client.post("/v1/chat/completions", json=payload)
     assert response.status_code == 400
-    err = _assert_openai_error_envelope(response.json())
+    err = assert_openai_error_envelope(response.json())
     assert err["type"] == "invalid_request_error"
     assert isinstance(err["message"], str) and len(err["message"]) > 0
     assert "model" in err["message"].lower()
 
 
-def test_http_exception_returns_openai_envelope_messages_required(api_client):
+def test_http_exception_returns_openai_envelope_messages_required(
+    api_client, assert_openai_error_envelope
+):
     payload = {
         "model": "meta.llama-test",
         "messages": [],
@@ -222,7 +273,7 @@ def test_http_exception_returns_openai_envelope_messages_required(api_client):
 
     response = api_client.post("/v1/chat/completions", json=payload)
     assert response.status_code == 400
-    err = _assert_openai_error_envelope(response.json())
+    err = assert_openai_error_envelope(response.json())
     assert "messages are required" in (err["message"] or "").lower()
 
 
@@ -280,7 +331,9 @@ def test_chat_completion_stream_live(live_api_client):
         "messages": [{"role": "user", "content": "Say hello in one word."}],
         "stream": True,
     }
-    with live_api_client.stream("POST", "/v1/chat/completions", json=payload) as response:
+    with live_api_client.stream(
+        "POST", "/v1/chat/completions", json=payload
+    ) as response:
         assert response.status_code == 200, (response.headers, response.iter_bytes())
         body = b"".join(response.iter_bytes()).decode()
     assert '"role": "assistant"' in body or "assistant" in body
@@ -303,9 +356,20 @@ def _search_knowledge_base_tool_schema():
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "query": {"type": "string", "description": "Natural language query for the knowledge base."},
-                    "top_k": {"type": "integer", "description": "Number of rows (1-20).", "default": 5},
-                    "table_name": {"type": "string", "description": "Oracle table to query.", "default": default_table},
+                    "query": {
+                        "type": "string",
+                        "description": "Natural language query for the knowledge base.",
+                    },
+                    "top_k": {
+                        "type": "integer",
+                        "description": "Number of rows (1-20).",
+                        "default": 5,
+                    },
+                    "table_name": {
+                        "type": "string",
+                        "description": "Oracle table to query.",
+                        "default": default_table,
+                    },
                 },
                 "required": ["query"],
             },
@@ -319,7 +383,10 @@ def test_chat_tool_call_search_knowledge_base_live(live_api_client):
     payload = {
         "model": os.getenv("MODEL_ID", "meta.llama-4-scout-17b-16e-instruct"),
         "messages": [
-            {"role": "user", "content": "Search the knowledge base for: OIC URL. Call the search_knowledge_base tool with that query."},
+            {
+                "role": "user",
+                "content": "Search the knowledge base for: OIC URL. Call the search_knowledge_base tool with that query.",
+            },
         ],
         "tools": [_search_knowledge_base_tool_schema()],
         "stream": False,
@@ -336,5 +403,11 @@ def test_chat_tool_call_search_knowledge_base_live(live_api_client):
         f"Expected tool_calls, got finish_reason={choice['finish_reason']!r} and message={choice['message']!r}"
     )
     tool_calls = choice["message"].get("tool_calls") or []
-    names = [tc["function"]["name"] for tc in tool_calls if isinstance(tc.get("function"), dict)]
-    assert "search_knowledge_base" in names, f"Expected search_knowledge_base in tool_calls, got {names}"
+    names = [
+        tc["function"]["name"]
+        for tc in tool_calls
+        if isinstance(tc.get("function"), dict)
+    ]
+    assert "search_knowledge_base" in names, (
+        f"Expected search_knowledge_base in tool_calls, got {names}"
+    )

@@ -9,14 +9,6 @@ from app.main import app as main_app
 from app.routers import responses as responses_module
 
 
-def _assert_openai_error_envelope(body: dict[str, object]):
-    assert "error" in body
-    err = body["error"]
-    assert isinstance(err, dict)
-    required = {"message", "type", "param", "code"}
-    assert required.issubset(err.keys())
-
-
 class _FakeChunk:
     def __init__(self, payload: Mapping[str, object]):
         self._payload: Mapping[str, object] = payload
@@ -25,7 +17,9 @@ class _FakeChunk:
         return self._payload
 
 
-def test_responses_unsupported_model_prefix_returns_openai_error(monkeypatch):
+def test_responses_unsupported_model_prefix_returns_openai_error(
+    monkeypatch, assert_openai_error_envelope
+):
     def _noop_create(**_kwargs):
         return None
 
@@ -40,10 +34,12 @@ def test_responses_unsupported_model_prefix_returns_openai_error(monkeypatch):
     )
 
     assert response.status_code == 400
-    _assert_openai_error_envelope(response.json())
+    assert_openai_error_envelope(response.json())
 
 
-def test_responses_client_without_responses_returns_501(monkeypatch):
+def test_responses_client_without_responses_returns_501(
+    monkeypatch, assert_openai_error_envelope
+):
     fake_client_api = SimpleNamespace()
     monkeypatch.setattr(responses_module, "client_api", fake_client_api)
     monkeypatch.setattr(responses_module, "compartment_id", "ocid1.test")
@@ -55,10 +51,12 @@ def test_responses_client_without_responses_returns_501(monkeypatch):
     )
 
     assert response.status_code == 501
-    _assert_openai_error_envelope(response.json())
+    assert_openai_error_envelope(response.json())
 
 
-def test_responses_missing_client_api_returns_500(monkeypatch):
+def test_responses_missing_client_api_returns_500(
+    monkeypatch, assert_openai_error_envelope
+):
     monkeypatch.setattr(responses_module, "client_api", None)
     monkeypatch.setattr(responses_module, "compartment_id", "ocid1.test")
 
@@ -69,10 +67,12 @@ def test_responses_missing_client_api_returns_500(monkeypatch):
     )
 
     assert response.status_code == 500
-    _assert_openai_error_envelope(response.json())
+    assert_openai_error_envelope(response.json())
 
 
-def test_responses_missing_compartment_id_returns_500(monkeypatch):
+def test_responses_missing_compartment_id_returns_500(
+    monkeypatch, assert_openai_error_envelope
+):
     def _noop_create(**_kwargs):
         return None
 
@@ -87,10 +87,10 @@ def test_responses_missing_compartment_id_returns_500(monkeypatch):
     )
 
     assert response.status_code == 500
-    _assert_openai_error_envelope(response.json())
+    assert_openai_error_envelope(response.json())
 
 
-def test_responses_missing_input_returns_400(monkeypatch):
+def test_responses_missing_input_returns_400(monkeypatch, assert_openai_error_envelope):
     def _noop_create(**_kwargs):
         return None
 
@@ -105,7 +105,7 @@ def test_responses_missing_input_returns_400(monkeypatch):
     )
 
     assert response.status_code == 400
-    _assert_openai_error_envelope(response.json())
+    assert_openai_error_envelope(response.json())
 
 
 def test_responses_non_stream_returns_dict_from_model_dump(monkeypatch):
@@ -126,6 +126,77 @@ def test_responses_non_stream_returns_dict_from_model_dump(monkeypatch):
 
     assert response.status_code == 200
     assert response.json() == expected
+
+
+def test_responses_non_stream_forwards_text_format(monkeypatch, strict_json_schema):
+    captured_kwargs: dict[str, object] = {}
+    expected = {"id": "resp_structured", "output": []}
+    text = {
+        "format": strict_json_schema(
+            "follow_up_questions",
+            {"questions": {"type": "array", "items": {"type": "string"}}},
+            ["questions"],
+        )
+    }
+
+    def _create(**kwargs):
+        captured_kwargs.update(kwargs)
+        return _FakeChunk(expected)
+
+    fake_client_api = SimpleNamespace(responses=SimpleNamespace(create=_create))
+    monkeypatch.setattr(responses_module, "client_api", fake_client_api)
+    monkeypatch.setattr(responses_module, "compartment_id", "ocid1.test")
+
+    api_client = TestClient(main_app)
+    response = api_client.post(
+        "/v1/responses",
+        json={
+            "model": "openai.gpt-4o-mini",
+            "input": "Return structured follow-up questions.",
+            "text": text,
+            "stream": False,
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json() == expected
+    assert captured_kwargs["text"] == text
+
+
+def test_responses_non_stream_maps_response_format_to_text_format(
+    monkeypatch, strict_json_schema
+):
+    captured_kwargs: dict[str, object] = {}
+    expected = {"id": "resp_structured_compat", "output": []}
+    response_format = strict_json_schema(
+        "follow_up_questions",
+        {"questions": {"type": "array", "items": {"type": "string"}}},
+        ["questions"],
+    )
+
+    def _create(**kwargs):
+        captured_kwargs.update(kwargs)
+        return _FakeChunk(expected)
+
+    fake_client_api = SimpleNamespace(responses=SimpleNamespace(create=_create))
+    monkeypatch.setattr(responses_module, "client_api", fake_client_api)
+    monkeypatch.setattr(responses_module, "compartment_id", "ocid1.test")
+
+    api_client = TestClient(main_app)
+    response = api_client.post(
+        "/v1/responses",
+        json={
+            "model": "openai.gpt-4o-mini",
+            "input": "Return structured follow-up questions.",
+            "response_format": response_format,
+            "stream": False,
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json() == expected
+    assert captured_kwargs["text"] == {"format": response_format}
+    assert "response_format" not in captured_kwargs
 
 
 def test_responses_non_stream_returns_wrapped_non_dict(monkeypatch):
@@ -151,10 +222,12 @@ def test_responses_stream_sse_yields_chunks_and_done(monkeypatch):
     second_chunk: dict[str, object] = {"id": "chunk_2", "delta": "there"}
 
     def _create(**_kwargs):
-        return iter([
-            _FakeChunk(first_chunk),
-            _FakeChunk(second_chunk),
-        ])
+        return iter(
+            [
+                _FakeChunk(first_chunk),
+                _FakeChunk(second_chunk),
+            ]
+        )
 
     fake_client_api = SimpleNamespace(responses=SimpleNamespace(create=_create))
     monkeypatch.setattr(responses_module, "client_api", fake_client_api)

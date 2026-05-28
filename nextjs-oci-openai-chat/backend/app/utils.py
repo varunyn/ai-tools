@@ -27,7 +27,9 @@ def create_openai_error(
     )
 
 
-def _conversation_error_response(exc: Exception, on_create: bool = False) -> JSONResponse:
+def _conversation_error_response(
+    exc: Exception, on_create: bool = False
+) -> JSONResponse:
     """Map OCI conversation API errors to appropriate status (e.g. 404 for Not Found)."""
     msg = str(exc).strip()
     lower = msg.lower()
@@ -69,8 +71,14 @@ def _assistant_tool_response(message: Any) -> Dict[str, Any]:
         "content": getattr(message, "content", None) or "",
         "tool_calls": [
             {
-                "id": (tc.get("id", "") if isinstance(tc, dict) else getattr(tc, "id", "")),
-                "type": (tc.get("type", "function") if isinstance(tc, dict) else getattr(tc, "type", "function")),
+                "id": (
+                    tc.get("id", "") if isinstance(tc, dict) else getattr(tc, "id", "")
+                ),
+                "type": (
+                    tc.get("type", "function")
+                    if isinstance(tc, dict)
+                    else getattr(tc, "type", "function")
+                ),
                 "function": {
                     "name": _tool_call_name(tc),
                     "arguments": _tool_call_arguments(tc) or "{}",
@@ -111,6 +119,14 @@ async def _run_completion(
     temperature: Optional[float],
     max_tokens: Optional[int],
     tools: Optional[List[Dict[str, Any]]] = None,
+    response_format: Optional[Dict[str, Any]] = None,
+    tool_choice: Any = None,
+    parallel_tool_calls: Optional[bool] = None,
+    stream_options: Optional[Dict[str, Any]] = None,
+    metadata: Optional[Dict[str, Any]] = None,
+    user: Optional[str] = None,
+    store: Optional[bool] = None,
+    max_completion_tokens: Optional[int] = None,
     stream: bool = False,
 ):
     """Run client.chat.completions.create in an executor to avoid blocking."""
@@ -123,7 +139,25 @@ async def _run_completion(
         "tools": tools or [],
         "stream": stream,
     }
-    return await loop.run_in_executor(None, functools.partial(client.chat.completions.create, **kwargs))
+    if response_format is not None:
+        kwargs["response_format"] = response_format
+    if tool_choice is not None:
+        kwargs["tool_choice"] = tool_choice
+    if parallel_tool_calls is not None:
+        kwargs["parallel_tool_calls"] = parallel_tool_calls
+    if stream_options is not None:
+        kwargs["stream_options"] = stream_options
+    if metadata is not None:
+        kwargs["metadata"] = metadata
+    if user is not None:
+        kwargs["user"] = user
+    if store is not None:
+        kwargs["store"] = store
+    if max_completion_tokens is not None:
+        kwargs["max_completion_tokens"] = max_completion_tokens
+    return await loop.run_in_executor(
+        None, functools.partial(client.chat.completions.create, **kwargs)
+    )
 
 
 def _to_jsonable(obj: Any) -> Any:

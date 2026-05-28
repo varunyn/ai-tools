@@ -20,6 +20,32 @@ from app.utils import (
 
 router = APIRouter()
 
+
+def _completion_kwargs_from_request(
+    request: OpenAIChatRequest,
+    messages: list[dict[str, object]],
+    tools: list[dict[str, object]],
+    *,
+    stream: bool,
+) -> dict[str, object]:
+    return {
+        "model": request.model,
+        "messages": messages,
+        "temperature": request.temperature,
+        "max_tokens": request.max_tokens,
+        "tools": tools,
+        "response_format": request.response_format,
+        "tool_choice": request.tool_choice,
+        "parallel_tool_calls": request.parallel_tool_calls,
+        "stream_options": request.stream_options,
+        "metadata": request.metadata,
+        "user": request.user,
+        "store": request.store,
+        "max_completion_tokens": request.max_completion_tokens,
+        "stream": stream,
+    }
+
+
 @router.post("/api/chat")
 async def chat(request: ChatRequest):
     if not client:
@@ -29,7 +55,10 @@ async def chat(request: ChatRequest):
         raise HTTPException(status_code=400, detail="Messages are required")
 
     if not compartment_id:
-        raise HTTPException(status_code=500, detail="OCI_COMPARTMENT_ID environment variable is required")
+        raise HTTPException(
+            status_code=500,
+            detail="OCI_COMPARTMENT_ID environment variable is required",
+        )
 
     try:
         tools = request.tools if request.tools else []
@@ -63,12 +92,18 @@ async def chat(request: ChatRequest):
         message = response.choices[0].message
 
         if not hasattr(message, "tool_calls") or not message.tool_calls:
-            user_message = str(messages_data[-1].get("content", "")) if messages_data else "N/A"
+            user_message = (
+                str(messages_data[-1].get("content", "")) if messages_data else "N/A"
+            )
             print(f"⚠️  No tool calls detected for query: {user_message[:100]}")
-            print(f"   LLM response: {message.content[:200] if message.content else 'None'}...")
+            print(
+                f"   LLM response: {message.content[:200] if message.content else 'None'}..."
+            )
 
         if hasattr(message, "tool_calls") and message.tool_calls:
-            print(f"🔧 Tool calls detected: {len(message.tool_calls)} tool(s) — forwarding to client")
+            print(
+                f"🔧 Tool calls detected: {len(message.tool_calls)} tool(s) — forwarding to client"
+            )
             return _assistant_tool_response(message)
 
         return {"role": "assistant", "content": message.content}
@@ -92,7 +127,10 @@ async def chat(request: ChatRequest):
                 },
             )
 
-        return JSONResponse(status_code=500, content={"error": "Internal server error", "details": error_msg})
+        return JSONResponse(
+            status_code=500,
+            content={"error": "Internal server error", "details": error_msg},
+        )
 
 
 @router.post("/v1/chat/completions")
@@ -105,7 +143,10 @@ async def chat_completions_openai(request: OpenAIChatRequest):
         raise HTTPException(status_code=400, detail="Messages are required")
 
     if not compartment_id:
-        raise HTTPException(status_code=500, detail="OCI_COMPARTMENT_ID environment variable is required")
+        raise HTTPException(
+            status_code=500,
+            detail="OCI_COMPARTMENT_ID environment variable is required",
+        )
 
     try:
         tools = request.tools or []
@@ -116,7 +157,11 @@ async def chat_completions_openai(request: OpenAIChatRequest):
             msg_dict: dict[str, object] = {"role": msg.get("role")}
             if "content" in msg:
                 c = msg["content"]
-                msg_dict["content"] = c if (msg.get("role") != "tool" or c is None or isinstance(c, str)) else json.dumps(c)
+                msg_dict["content"] = (
+                    c
+                    if (msg.get("role") != "tool" or c is None or isinstance(c, str))
+                    else json.dumps(c)
+                )
             if "tool_calls" in msg:
                 msg_dict["tool_calls"] = msg["tool_calls"]
             if "tool_call_id" in msg:
@@ -135,26 +180,31 @@ async def chat_completions_openai(request: OpenAIChatRequest):
             f"📥 OpenAI chat request: stream={bool(request.stream)} | messages={len(messages_data)} roles={roles} | client_tools={len(client_tool_names)} names={client_tool_names}"
         )
         try:
-            last_user = next((m for m in reversed(messages_data) if m.get("role") == "user"), None)
+            last_user = next(
+                (m for m in reversed(messages_data) if m.get("role") == "user"), None
+            )
             if last_user and "content" in last_user and last_user.get("content"):
                 print(f"   └─ last_user: {_shorten(last_user.get('content'))}")
         except Exception:
             pass
         try:
-            print("   └─ backend executes no tools; forwarding tool_calls to client if present")
+            print(
+                "   └─ backend executes no tools; forwarding tool_calls to client if present"
+            )
         except Exception:
             pass
 
         if request.stream:
+
             async def generate_stream():
                 try:
                     stream_resp = await _run_completion(
-                        model=request.model,
-                        messages=messages_data,
-                        temperature=request.temperature,
-                        max_tokens=request.max_tokens,
-                        tools=tools,
-                        stream=True,
+                        **_completion_kwargs_from_request(
+                            request,
+                            messages_data,
+                            tools,
+                            stream=True,
+                        )
                     )
 
                     if hasattr(stream_resp, "__iter__"):
@@ -164,7 +214,9 @@ async def chat_completions_openai(request: OpenAIChatRequest):
 
                         while True:
                             sentinel = object()
-                            chunk = await loop.run_in_executor(None, lambda: next(stream_iter, sentinel))
+                            chunk = await loop.run_in_executor(
+                                None, lambda: next(stream_iter, sentinel)
+                            )
                             if chunk is sentinel:
                                 break
 
@@ -174,7 +226,11 @@ async def chat_completions_openai(request: OpenAIChatRequest):
                                     choices = chunk_json.get("choices")
                                     if isinstance(choices, list):
                                         for choice in choices:
-                                            if isinstance(choice, dict) and choice.get("finish_reason") is not None:
+                                            if (
+                                                isinstance(choice, dict)
+                                                and choice.get("finish_reason")
+                                                is not None
+                                            ):
                                                 saw_finish = True
                                 except Exception:
                                     pass
@@ -191,7 +247,11 @@ async def chat_completions_openai(request: OpenAIChatRequest):
                         chunk_id = f"chatcmpl-{int(time.time())}"
                         yield f"data: {json.dumps({'id': chunk_id, 'object': 'chat.completion.chunk', 'created': int(time.time()), 'model': request.model, 'choices': [{'index': 0, 'delta': {'role': 'assistant'}, 'finish_reason': None}]})}\n\n"
                         for i, tc in enumerate(first_msg.tool_calls):
-                            tc_id = tc.get("id", "") if isinstance(tc, dict) else getattr(tc, "id", "")
+                            tc_id = (
+                                tc.get("id", "")
+                                if isinstance(tc, dict)
+                                else getattr(tc, "id", "")
+                            )
                             name = _tool_call_name(tc) or ""
                             args = _tool_call_arguments(tc) or "{}"
                             yield f"data: {json.dumps({'id': chunk_id, 'object': 'chat.completion.chunk', 'created': int(time.time()), 'model': request.model, 'choices': [{'index': 0, 'delta': {'tool_calls': [{'index': i, 'id': tc_id, 'function': {'name': name, 'arguments': args}}]}, 'finish_reason': None}]})}\n\n"
@@ -199,7 +259,9 @@ async def chat_completions_openai(request: OpenAIChatRequest):
                         yield "data: [DONE]\n\n"
                         return
 
-                    content = (getattr(first_msg, "content", None) or "").strip() or "(No response generated.)"
+                    content = (
+                        getattr(first_msg, "content", None) or ""
+                    ).strip() or "(No response generated.)"
                     chunk_id = f"chatcmpl-{int(time.time())}"
                     yield f"data: {json.dumps({'id': chunk_id, 'object': 'chat.completion.chunk', 'created': int(time.time()), 'model': request.model, 'choices': [{'index': 0, 'delta': {'role': 'assistant'}, 'finish_reason': None}]})}\n\n"
                     for i in range(0, len(content), 64):
@@ -214,12 +276,12 @@ async def chat_completions_openai(request: OpenAIChatRequest):
             return StreamingResponse(generate_stream(), media_type="text/event-stream")
 
         first_resp = await _run_completion(
-            model=request.model,
-            messages=messages_data,
-            temperature=request.temperature,
-            max_tokens=request.max_tokens,
-            tools=tools,
-            stream=False,
+            **_completion_kwargs_from_request(
+                request,
+                messages_data,
+                tools,
+                stream=False,
+            )
         )
         first_msg = first_resp.choices[0].message
 
@@ -227,10 +289,16 @@ async def chat_completions_openai(request: OpenAIChatRequest):
             try:
                 tc_infos = []
                 for tc in first_msg.tool_calls:
-                    tc_id = tc.get("id", "") if isinstance(tc, dict) else getattr(tc, "id", "")
+                    tc_id = (
+                        tc.get("id", "")
+                        if isinstance(tc, dict)
+                        else getattr(tc, "id", "")
+                    )
                     name = _tool_call_name(tc) or ""
                     tc_infos.append({"id": tc_id, "name": name})
-                print(f"🔧 tool_calls: {len(tc_infos)} → {tc_infos} | forwarding_to_client=True")
+                print(
+                    f"🔧 tool_calls: {len(tc_infos)} → {tc_infos} | forwarding_to_client=True"
+                )
                 print("↪️ forwarding tool_calls to client (non-stream)")
             except Exception:
                 pass
@@ -240,8 +308,18 @@ async def chat_completions_openai(request: OpenAIChatRequest):
                 "object": "chat.completion",
                 "created": int(time.time()),
                 "model": request.model,
-                "choices": [{"index": 0, "message": assistant_msg, "finish_reason": "tool_calls"}],
-                "usage": {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0},
+                "choices": [
+                    {
+                        "index": 0,
+                        "message": assistant_msg,
+                        "finish_reason": "tool_calls",
+                    }
+                ],
+                "usage": {
+                    "prompt_tokens": 0,
+                    "completion_tokens": 0,
+                    "total_tokens": 0,
+                },
             }
         else:
             content = (getattr(first_msg, "content", None) or "").strip()
@@ -254,7 +332,9 @@ async def chat_completions_openai(request: OpenAIChatRequest):
             "object": "chat.completion",
             "created": int(time.time()),
             "model": request.model,
-            "choices": [{"index": 0, "message": assistant_message, "finish_reason": "stop"}],
+            "choices": [
+                {"index": 0, "message": assistant_message, "finish_reason": "stop"}
+            ],
             "usage": {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0},
         }
         return response_data
@@ -262,4 +342,6 @@ async def chat_completions_openai(request: OpenAIChatRequest):
     except Exception as e:
         error_msg = str(e)
         print(f"Error in OpenAI-compatible endpoint: {error_msg}")
-        return create_openai_error(message=error_msg, status_code=500, type="server_error")
+        return create_openai_error(
+            message=error_msg, status_code=500, type="server_error"
+        )

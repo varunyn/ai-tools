@@ -21,6 +21,14 @@ class OpenAIChatRequest(BaseModel):
     model: str
     messages: List[Dict[str, Any]]
     tools: Optional[List[Dict[str, Any]]] = None
+    response_format: Dict[str, Any] | None = None
+    tool_choice: Any = None
+    parallel_tool_calls: bool | None = None
+    stream_options: Dict[str, Any] | None = None
+    metadata: Dict[str, Any] | None = None
+    user: str | None = None
+    store: bool | None = None
+    max_completion_tokens: int | None = None
     temperature: float | None = 0.7
     max_tokens: int | None = 1000
     stream: bool | None = False
@@ -37,3 +45,5 @@ class CreateResponseRequest(BaseModel):
     stream: bool | None = False
     tools: Optional[List[Dict[str, Any]]] = None
     store: bool | None = None
+    text: Dict[str, Any] | None = None
+    response_format: Dict[str, Any] | None = None

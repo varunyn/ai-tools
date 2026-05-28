@@ -1,53 +1,63 @@
 # AGENTS — `backend/`
 
-## OVERVIEW
+## What matters here
 
-FastAPI service that proxies OpenAI-compatible chat requests to OCI Generative AI, enforcing “tools are executed outside FastAPI”. Everything runs under Python 3.10+ with `uv`.
+- FastAPI entrypoint is `app/main.py`. It registers `health`, `models`, `chat`, and `responses` routers, adds permissive CORS, and prints `DEBUG REQUEST/RESPONSE` for every request.
+- OCI setup in `app/config.py` is easy to break: the backend uses **two** `OciOpenAI` clients.
+  - `client_chat` uses a base URL **with** `/actions/v1` for `chat.completions`
+  - `client_api` uses a base URL **without** `/actions/v1` for `responses` / conversations
+  - Reusing the wrong client/base URL causes 404-style path errors.
 
-## STRUCTURE
+## Verified commands
 
-| Path                  | Purpose                                                                 |
-| --------------------- | ----------------------------------------------------------------------- |
-| `app/main.py`         | Builds the FastAPI app, registers routers + middleware.                 |
-| `app/routers/chat.py` | `/api/chat`, `/v1/chat/completions`, streaming SSE, tool forwarding.    |
-| `app/utils.py`        | `_run_completion`, logging helpers, tool-call serialization.            |
-| `scripts/`            | Dev helpers (`start_fastapi.sh`, `test_chat_curl.sh`, `test_tools.sh`). |
-| `docs/`               | Detailed RAG + tool-forwarding guidance.                                |
-
-Tool clients (Oracle RAG, calculator MCP) live at **repo root** in `tools/`; see root AGENTS.md and `tools/README.md`.
-
-## COMMANDS
+Run from `backend/` unless noted otherwise.
 
 ```bash
-uv sync                                 # install deps
-uv run uvicorn app.main:app --reload    # dev server
-uv run pytest                           # backend tests
-uv run pytest backend/tests/test_chat_completions.py -k stream  # single test
-uv run black . && uv run flake8         # format + lint
-./scripts/test_chat_curl.sh             # OpenAI parity smoke test
-./scripts/test_tools.sh                 # verifies tool forwarding (non-exec)
+uv sync
+uv run uvicorn app.main:app --host 0.0.0.0 --port 3001 --reload
+./scripts/start_fastapi.sh
+
+./.venv/bin/python3 -m pytest
+./.venv/bin/python3 -m pytest tests/test_responses.py
+./.venv/bin/python3 -m pytest tests/test_chat_completions.py -k stream
+
+uv run ruff check app tests
+uv run ruff format app tests
+
+./scripts/test_chat_curl.sh
 ```
 
-## CONVENTIONS
+## Test/runtime quirks
 
-1. **OCI config** lives at `backend/oci-config` by default; environment overrides via `OCI_CONFIG_FILE`, `OCI_CONFIG_PROFILE`.
-2. **Logs** use emoji markers (`📥`, `🔧`, `↪️`). Keep truncation via `_shorten` to avoid leaking prompts or secrets.
-3. **Tool calls**: backend never executes them. When `tool_calls` appear, return `_assistant_tool_response` with `finish_reason="tool_calls"` (both streaming + non-streaming). Tool execution happens in Next.js server (MCP) or via root `tools/` harness.
-4. **Streaming pattern**: `_run_completion(stream=False)` is invoked first to inspect whether tool calls exist before pushing SSE chunks.
-5. **Testing**: only `backend/tests/test_chat_completions.py` exists; it mocks `_run_completion`. Add new tests under `backend/tests/` and use pytest fixtures.
+- `backend/.venv/bin/pytest` may point at a stale absolute path. If `uv run pytest` or the wrapper fails, use `./.venv/bin/python3 -m pytest ...`.
+- `pyproject.toml` sets `pythonpath = [".."]` for pytest so tests can import repo-root `tools` modules while running from `backend/`.
+- Test coverage is broader than chat-completions only. `backend/tests/` includes responses, chat API, health, models, and utils tests; `tests/conftest.py` prints a custom backend summary table.
+- Some live OCI tests are intentionally skipped unless OCI env/config is present.
 
-## ANTI-PATTERNS
+## Route contracts agents usually guess wrong
 
-- Do **not** import or run MCP/Oracle tools inside FastAPI routes—breaks the client-only contract.
-- Do **not** log full OCI responses, wallets, or user prompts; always redact via `_shorten`.
-- Do **not** bypass `uv` for dependency installs; keep `pyproject.toml` + `uv.lock` as source of truth.
+- `POST /api/chat`
+  - returns `{ "role": "assistant", "content": ... }` for plain responses
+  - returns an assistant message with `tool_calls` when OCI asks the client to execute tools
+- `POST /v1/chat/completions` and `/api/v1/chat/completions`
+  - OpenAI-style JSON envelope for non-stream responses
+  - SSE for `stream=true`
+  - tool calls are **forwarded**, never executed in FastAPI
+- `POST /v1/responses` and `/api/responses`
+  - only accepts model ids starting with `openai.gpt` or `xai.grok`
+  - rejects other models with an OpenAI-style 400 error envelope
+  - structured outputs follow the **Responses API** shape: use `text.format`
+  - legacy top-level `response_format` is only a compatibility shim; backend maps it to `text.format`
 
-## TIPS
+## Structured output contract
 
-- Use `app/config.py` helpers (`client`, `compartment_id`, `model_id`) instead of rebuilding OCI clients per request.
-- CLI smoke tests (`tools/oracle/run_rag_tool_client.py`, `tools/calculator/run_calculator_tool_client.py`) expect environment variables such as `FASTAPI_BACKEND_URL`, `CALCULATOR_MCP_URL`, and Oracle DSN credentials. Run from repo root with `PYTHONPATH=. uv run --project backend python -m tools.*`.
-- When adding routers, always include them in `app/main.py` and ensure they respect CORS + logging conventions.
+- For `POST /v1/chat/completions`, OpenAI-style structured output belongs on top-level `response_format`.
+- For `POST /v1/responses`, OpenAI-style structured output belongs under `text.format`, not top-level `response_format`.
+- If debugging “Invalid json output”, check the request shape first before changing parsing logic.
 
----
+## Constraints to preserve
 
-Generated 2026-02-16
+- Do **not** execute MCP / Oracle / RAG tools inside FastAPI routes. The backend only forwards tool calls to the client.
+- Do **not** collapse `client_chat` and `client_api` into one OCI client unless you also rework the base URL rules.
+- Keep OpenAI-style error envelopes intact; `app/main.py` converts `HTTPException` and validation errors through `create_openai_error`.
+- `scripts/test_chat_curl.sh` is the only verified smoke script under `backend/scripts/`. `test_tools.sh` is not present.

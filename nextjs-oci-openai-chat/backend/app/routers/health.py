@@ -2,6 +2,7 @@ from fastapi import APIRouter
 
 router = APIRouter()
 
+
 @router.get("/")
 async def root() -> dict[str, object]:
     return {
@@ -16,6 +17,7 @@ async def root() -> dict[str, object]:
         },
     }
 
+
 @router.get("/v1")
 @router.get("/v1/")
 async def v1_root() -> dict[str, object]:
@@ -28,6 +30,7 @@ async def v1_root() -> dict[str, object]:
             "responses": "/v1/responses",
         },
     }
+
 
 @router.get("/health")
 async def health() -> dict[str, str]:

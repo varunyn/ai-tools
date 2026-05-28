@@ -8,22 +8,18 @@ from app.main import app as main_app
 from app.routers import chat as chat_module
 
 
-def _make_fake_client(*, content: str, tool_calls: list[dict[str, object]] | None = None):
+def _make_fake_client(
+    *, content: str, tool_calls: list[dict[str, object]] | None = None
+):
     tool_calls = tool_calls or []
 
     def _create(**_kwargs):
         message = SimpleNamespace(content=content, tool_calls=tool_calls)
         return SimpleNamespace(choices=[SimpleNamespace(message=message)])
 
-    return SimpleNamespace(chat=SimpleNamespace(completions=SimpleNamespace(create=_create)))
-
-
-def _assert_openai_error_envelope(body: dict[str, object]):
-    assert "error" in body
-    err = body["error"]
-    assert isinstance(err, dict)
-    required = {"message", "type", "param", "code"}
-    assert required.issubset(err.keys())
+    return SimpleNamespace(
+        chat=SimpleNamespace(completions=SimpleNamespace(create=_create))
+    )
 
 
 def test_api_chat_happy_path_returns_role_and_content(monkeypatch):
@@ -76,7 +72,7 @@ def test_api_chat_tool_calls_forwarded(monkeypatch):
     assert body["tool_calls"][0]["function"]["arguments"] == "{}"
 
 
-def test_api_chat_errors_client_missing(monkeypatch):
+def test_api_chat_errors_client_missing(monkeypatch, assert_openai_error_envelope):
     monkeypatch.setattr(chat_module, "client", None)
     monkeypatch.setattr(chat_module, "compartment_id", "ocid1.test")
 
@@ -87,10 +83,10 @@ def test_api_chat_errors_client_missing(monkeypatch):
     )
     assert response.status_code == 500
     body = response.json()
-    _assert_openai_error_envelope(body)
+    assert_openai_error_envelope(body)
 
 
-def test_api_chat_errors_messages_required(monkeypatch):
+def test_api_chat_errors_messages_required(monkeypatch, assert_openai_error_envelope):
     fake_client = _make_fake_client(content="hi")
     monkeypatch.setattr(chat_module, "client", fake_client)
     monkeypatch.setattr(chat_module, "compartment_id", "ocid1.test")
@@ -102,10 +98,10 @@ def test_api_chat_errors_messages_required(monkeypatch):
     )
     assert response.status_code == 400
     body = response.json()
-    _assert_openai_error_envelope(body)
+    assert_openai_error_envelope(body)
 
 
-def test_api_chat_errors_compartment_missing(monkeypatch):
+def test_api_chat_errors_compartment_missing(monkeypatch, assert_openai_error_envelope):
     fake_client = _make_fake_client(content="hi")
     monkeypatch.setattr(chat_module, "client", fake_client)
     monkeypatch.setattr(chat_module, "compartment_id", None)
@@ -117,4 +113,4 @@ def test_api_chat_errors_compartment_missing(monkeypatch):
     )
     assert response.status_code == 500
     body = response.json()
-    _assert_openai_error_envelope(body)
+    assert_openai_error_envelope(body)

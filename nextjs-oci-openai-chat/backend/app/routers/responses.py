@@ -15,13 +15,17 @@ router = APIRouter()
 
 RESPONSES_API_MODEL_PREFIXES = ("openai.gpt", "xai.grok")
 
+
 @router.post("/api/responses")
 @router.post("/v1/responses")
 async def create_response(request: CreateResponseRequest):
     if not client_api:
         raise HTTPException(status_code=500, detail="OCI Client not initialized")
     if not compartment_id:
-        raise HTTPException(status_code=500, detail="OCI_COMPARTMENT_ID environment variable is required")
+        raise HTTPException(
+            status_code=500,
+            detail="OCI_COMPARTMENT_ID environment variable is required",
+        )
     if (isinstance(request.input, str) and request.input == "") or not request.model:
         raise HTTPException(status_code=400, detail="model and input are required")
 
@@ -40,6 +44,10 @@ async def create_response(request: CreateResponseRequest):
     input_value = request.input
 
     try:
+        text_config = request.text
+        if text_config is None and request.response_format is not None:
+            text_config = {"format": request.response_format}
+
         create_kwargs: dict[str, Any] = {
             "model": request.model,
             "input": input_value,
@@ -50,6 +58,8 @@ async def create_response(request: CreateResponseRequest):
             create_kwargs["tools"] = request.tools
         if request.store is not None:
             create_kwargs["store"] = request.store
+        if text_config is not None:
+            create_kwargs["text"] = text_config
         if not hasattr(client_api, "responses"):
             return create_openai_error(
                 message="OCI client does not support responses API (responses.create). Check oci-openai package version.",
@@ -106,4 +116,6 @@ async def create_response(request: CreateResponseRequest):
     except Exception as e:
         error_msg = str(e)
         print(f"Responses API error: {error_msg}")
-        return create_openai_error(message=error_msg, status_code=500, type="server_error")
+        return create_openai_error(
+            message=error_msg, status_code=500, type="server_error"
+        )
