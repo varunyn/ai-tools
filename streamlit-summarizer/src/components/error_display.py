@@ -89,13 +89,13 @@ def display_user_friendly_error(
             st.caption(f"Context: {context}")
         
         # Show suggestions
-        with st.expander("💡 What can I do?", expanded=True):
+        with st.expander("💡 What can I do?", expanded=True, type="compact"):
             for suggestion in error_info['suggestions']:
                 st.write(f"• {suggestion}")
         
         # Show technical details if requested
         if show_details:
-            with st.expander("🔧 Technical Details", expanded=False):
+            with st.expander("🔧 Technical Details", expanded=False, type="compact"):
                 st.exception(error)
         
         # Add retry button for certain errors

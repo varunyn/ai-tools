@@ -3,7 +3,6 @@ Enhanced progress display components using Streamlit's latest features.
 """
 import streamlit as st
 import time
-from typing import Optional
 
 
 class EnhancedProgressMonitor:
@@ -32,7 +31,12 @@ class EnhancedProgressMonitor:
             label: Label for the status container
         """
         self.start_time = time.time()
-        self.status_container = st.status(label, expanded=True, state="running")
+        self.status_container = st.status(
+            label,
+            expanded=True,
+            state="running",
+            type="compact",
+        )
         with self.status_container:
             self.progress_bar = st.progress(0, text="Initializing...")
             st.write("Starting document processing...")

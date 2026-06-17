@@ -27,8 +27,7 @@ src/
     ├── oci_client.py        # OCI client caching
     ├── prompts.py           # Prompt management utilities
     ├── callbacks.py         # Streamlit widget callbacks
-    ├── processing.py        # File processing and summary generation
-    └── styles.py            # Custom CSS styles
+    └── processing.py        # File processing and summary generation
 ```
 
 ## Module Responsibilities
@@ -38,7 +37,6 @@ src/
 - **Responsibilities**:
   - Initialize logging
   - Configure page settings
-  - Apply custom styles
   - Initialize session state
   - Render sidebar and main content
   - Handle file upload and processing flow
@@ -82,11 +80,6 @@ src/
   - `process_file_with_model()` - Main processing function
   - `_process_long_document()` - Chunked processing with progress
   - `_cleanup_temp_files()` - Cleanup temporary files
-
-### `utils/styles.py`
-- **Purpose**: Custom CSS styling
-- **Contains**:
-  - `CUSTOM_CSS` - All custom CSS styles
 
 ### `ui/sidebar.py`
 - **Purpose**: Sidebar UI rendering

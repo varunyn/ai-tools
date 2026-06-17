@@ -64,10 +64,12 @@ monitor_thread_timeout = 1
     with run_streamlit_app(port, env=env):
         _ = page.goto(f"http://127.0.0.1:{port}")
 
+        page.get_by_role("button", name="Edit prompt").click()
+
         prompt_name_input = page.get_by_role("textbox", name=PROMPT_NAME_TEXTBOX_LABEL)
         prompt_name_input.fill(prompt_name)
 
-        save_button = page.get_by_role("button", name="💾 Save Prompt")
+        save_button = page.get_by_role("button", name="Save prompt")
         save_button.click()
 
         page.get_by_text("saved").wait_for(timeout=5000)

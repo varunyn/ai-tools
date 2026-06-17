@@ -102,8 +102,7 @@ def render_summary_section(uploaded_file) -> None:
 
 def _render_summary_actions(uploaded_file) -> None:
     """Render action buttons for summary (copy, download)."""
-    col_copy, col_view = st.columns(2)
-    with col_copy:
+    with st.container(horizontal=True, horizontal_alignment="distribute"):
         button_text = (
             "📋 Copy to Clipboard" 
             if not st.session_state.show_copy_view 
@@ -113,10 +112,9 @@ def _render_summary_actions(uploaded_file) -> None:
         st.button(
             button_text,
             on_click=toggle_copy_view,
-            use_container_width=True
+            width="stretch",
         )
-    
-    with col_view:
+
         # Export functionality
         summary_text = st.session_state.generated_summary
         st.download_button(
@@ -124,7 +122,7 @@ def _render_summary_actions(uploaded_file) -> None:
             data=summary_text,
             file_name=f"summary_{uploaded_file.name if uploaded_file else 'summary'}.txt",
             mime="text/plain",
-            use_container_width=True
+            width="stretch",
         )
 
 
@@ -138,12 +136,8 @@ def _render_summary_content() -> None:
             "Select all the text (Ctrl+A or Cmd+A) and copy (Ctrl+C or Cmd+C)."
         )
     else:
-        # Display the summary in a styled box
-        st.markdown(f"""
-        <div class="summary-box">
-            {st.session_state.generated_summary}
-        </div>
-        """, unsafe_allow_html=True)
+        with st.container(border=True):
+            st.markdown(st.session_state.generated_summary)
 
 
 def _render_feedback_section() -> None:

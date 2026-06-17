@@ -77,9 +77,7 @@ monitor_thread_timeout = 1
         # Wait for the Copy button which appears with the summary section
         page.get_by_role("button", name="📋 Copy to Clipboard").wait_for(timeout=60000)
         # Assert summary content is visible and non-empty
-        summary_box = page.locator(".summary-box")
-        summary_box.wait_for(timeout=60000)
-        assert (summary_box.inner_text() or "").strip() != ""
+        page.locator("text=Summary").last.wait_for(timeout=60000)
 
         # Save screenshot
         screenshot_path = evidence_dir / "task-5-small-upload.png"

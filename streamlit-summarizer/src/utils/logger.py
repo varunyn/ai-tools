@@ -5,7 +5,6 @@ Configures Python logging to write to the logs directory with proper formatting,
 rotation, and different log levels.
 """
 import logging
-import os
 from pathlib import Path
 from logging.handlers import RotatingFileHandler
 from datetime import datetime

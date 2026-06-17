@@ -8,8 +8,7 @@ import os
 import streamlit as st
 import oci
 import yaml
-import logging
-from typing import Optional, Dict, Any
+from typing import Dict, Any
 from utils.logger import get_logger
 
 logger = get_logger(__name__)

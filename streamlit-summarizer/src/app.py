@@ -4,7 +4,6 @@ import logging
 from utils.logger import setup_logging
 from config.constants import APP_NAME, APP_ICON
 from config.session_state import initialize_session_state
-from utils.styles import CUSTOM_CSS
 from ui.sidebar import render_sidebar
 from ui.main_content import render_main_panel
 from utils.processing import process_file_with_model
@@ -16,8 +15,6 @@ st.set_page_config(
     page_icon=APP_ICON,
     layout="wide"
 )
-
-st.html(CUSTOM_CSS)
 
 initialize_session_state()
 

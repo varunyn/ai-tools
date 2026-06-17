@@ -5,11 +5,9 @@ Supports multiple models (OpenAI, xAI Grok, Meta Llama, etc.) via OnDemandServin
 Model-specific parameters are applied by model_id prefix (xai., meta., else default).
 """
 import json
-import os
 import time
 from typing import Any, Callable
 
-import oci
 from oci.generative_ai_inference.models import (
     BaseChatRequest,
     ChatDetails,
